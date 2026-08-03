@@ -115,6 +115,9 @@ jobs:
       - name: Build release
         run: cargo build --release
 
+      - name: Package .dmg
+        run: bash packaging/macos-dmg.sh
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5
         with:
@@ -123,5 +126,6 @@ jobs:
             target/release/yandex-music
             target/release/ym-cli
             target/release/playtest
+            dist/*.dmg
           if-no-files-found: error
           retention-days: 7

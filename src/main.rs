@@ -63,7 +63,38 @@ fn load_css() {
     );
 }
 
+#[cfg(target_os = "macos")]
+fn setup_macos_bundle_env() {
+    let Ok(exe) = std::env::current_exe() else {
+        return;
+    };
+    let Some(resources) = exe
+        .parent()
+        .and_then(|p| p.parent())
+        .map(|p| p.join("Resources"))
+    else {
+        return;
+    };
+    if !resources.join("lib").is_dir() {
+        return;
+    }
+    std::env::set_var("GST_PLUGIN_PATH", resources.join("lib/gstreamer-1.0"));
+    std::env::set_var(
+        "GDK_PIXBUF_MODULE_FILE",
+        resources.join("lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"),
+    );
+    std::env::set_var(
+        "GSETTINGS_SCHEMA_DIR",
+        resources.join("share/glib-2.0/schemas"),
+    );
+    std::env::set_var("XDG_DATA_DIRS", resources.join("share"));
+    std::env::set_var("FONTCONFIG_FILE", resources.join("etc/fonts.conf"));
+}
+
 fn main() {
+    #[cfg(target_os = "macos")]
+    setup_macos_bundle_env();
+
     // Render with cairo instead of GL: the GL renderer pulls the GPU driver's
     // shader compiler and device buffers into the process (hundreds of MB of
     // RSS on some stacks), while this UI is simple enough to paint in software.

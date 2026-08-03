@@ -57,6 +57,10 @@ jobs:
         if: runner.os == 'Linux'
         run: cargo deb --output dist/
 
+      - name: Package .dmg (macOS)
+        if: runner.os == 'macOS'
+        run: bash packaging/macos-dmg.sh
+
       - name: Package tarball
         run: |
           mkdir -p dist/tarball
