@@ -2,7 +2,7 @@
 name = "yandex-music-app"
 version = "0.1.0"
 edition = "2021"
-description = "Native GTK4 player for Yandex Music"
+description = "Unofficial native GTK4 player for Yandex Music"
 license = "MIT"
 
 [lib]
