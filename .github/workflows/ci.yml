@@ -25,7 +25,8 @@ jobs:
             libgtk-4-dev \
             libadwaita-1-dev \
             libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -61,7 +62,8 @@ jobs:
             libgtk-4-dev \
             libadwaita-1-dev \
             libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
