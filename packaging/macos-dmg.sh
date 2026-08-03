@@ -69,10 +69,22 @@ relocate() {
 echo "==> Bundling dylib dependencies"
 relocate "${BIN_PATH}"
 
+copy_loose() {
+    local dest="$1"
+    shift
+    for src in "$@"; do
+        if [[ -e "${src}" ]]; then
+            cp -L "${src}" "${dest}/"
+        else
+            echo "warning: skipping missing/broken ${src}"
+        fi
+    done
+}
+
 if [[ -d "${BREW_PREFIX}/lib/gstreamer-1.0" ]]; then
     echo "==> Bundling GStreamer plugins"
     mkdir -p "${LIB_DIR}/gstreamer-1.0"
-    cp "${BREW_PREFIX}"/lib/gstreamer-1.0/*.dylib "${LIB_DIR}/gstreamer-1.0/"
+    copy_loose "${LIB_DIR}/gstreamer-1.0" "${BREW_PREFIX}"/lib/gstreamer-1.0/*.dylib
     for plugin in "${LIB_DIR}"/gstreamer-1.0/*.dylib; do
         relocate "${plugin}"
     done
@@ -82,7 +94,7 @@ if [[ -d "${BREW_PREFIX}/lib/gdk-pixbuf-2.0" ]]; then
     echo "==> Bundling gdk-pixbuf loaders"
     PIXBUF_LOADERS_DIR="$(echo "${BREW_PREFIX}"/lib/gdk-pixbuf-2.0/*/loaders | awk '{print $1}')"
     mkdir -p "${LIB_DIR}/gdk-pixbuf-2.0/2.10.0/loaders"
-    cp "${PIXBUF_LOADERS_DIR}"/*.so "${LIB_DIR}/gdk-pixbuf-2.0/2.10.0/loaders/"
+    copy_loose "${LIB_DIR}/gdk-pixbuf-2.0/2.10.0/loaders" "${PIXBUF_LOADERS_DIR}"/*.so
     for loader in "${LIB_DIR}"/gdk-pixbuf-2.0/2.10.0/loaders/*.so; do
         relocate "${loader}"
     done
@@ -93,7 +105,7 @@ if [[ -d "${BREW_PREFIX}/lib/gdk-pixbuf-2.0" ]]; then
 fi
 
 echo "==> Bundling GSettings schemas"
-cp "${BREW_PREFIX}"/share/glib-2.0/schemas/*.xml "${SCHEMAS_DIR}/"
+copy_loose "${SCHEMAS_DIR}" "${BREW_PREFIX}"/share/glib-2.0/schemas/*.xml
 "${BREW_PREFIX}/bin/glib-compile-schemas" "${SCHEMAS_DIR}"
 
 echo "==> Bundling icon theme"
