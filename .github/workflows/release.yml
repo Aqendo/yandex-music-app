@@ -71,11 +71,23 @@ jobs:
       - name: List release assets
         run: ls -lh dist/
 
-      - name: Upload release assets
+      - name: Upload binaries
         uses: actions/upload-artifact@v5
         with:
-          name: dist-${{ matrix.arch }}
-          path: dist/
+          name: release-${{ matrix.arch }}-binaries
+          path: |
+            dist/*.tar.gz
+            dist/*.deb
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload .dmg
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-${{ matrix.arch }}-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
           retention-days: 7
 
   release:
