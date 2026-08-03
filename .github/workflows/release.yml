@@ -18,12 +18,15 @@ jobs:
             arch: x86_64-unknown-linux-gnu
           - runner: ubuntu-24.04-arm
             arch: aarch64-unknown-linux-gnu
+          - runner: macos-15
+            arch: aarch64-apple-darwin
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install system dependencies
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -32,6 +35,10 @@ jobs:
             libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev \
             libgstreamer-plugins-bad1.0-dev
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gtk4 libadwaita gstreamer adwaita-icon-theme
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -43,10 +50,16 @@ jobs:
         run: cargo build --release
 
       - name: Install cargo-deb
+        if: runner.os == 'Linux'
         run: cargo install cargo-deb --locked
 
       - name: Build .deb package
+        if: runner.os == 'Linux'
         run: cargo deb --output dist/
+
+      - name: Package .dmg (macOS)
+        if: runner.os == 'macOS'
+        run: bash packaging/macos-dmg.sh
 
       - name: Package tarball
         run: |
@@ -58,11 +71,23 @@ jobs:
       - name: List release assets
         run: ls -lh dist/
 
-      - name: Upload release assets
+      - name: Upload binaries
         uses: actions/upload-artifact@v5
         with:
-          name: dist-${{ matrix.arch }}
-          path: dist/
+          name: release-${{ matrix.arch }}-binaries
+          path: |
+            dist/*.tar.gz
+            dist/*.deb
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload .dmg
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-${{ matrix.arch }}-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
           retention-days: 7
 
   release:

@@ -95,3 +95,44 @@ jobs:
             target/release/playtest
           if-no-files-found: error
           retention-days: 7
+
+  build-macos:
+    name: build (macOS arm64)
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install system dependencies
+        run: brew install gtk4 libadwaita gstreamer adwaita-icon-theme
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release
+        run: cargo build --release
+
+      - name: Package .dmg
+        run: bash packaging/macos-dmg.sh
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v5
+        with:
+          name: build-aarch64-apple-darwin
+          path: |
+            target/release/yandex-music
+            target/release/ym-cli
+            target/release/playtest
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload .dmg
+        uses: actions/upload-artifact@v5
+        with:
+          name: build-aarch64-apple-darwin-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
+          retention-days: 7
