@@ -190,6 +190,10 @@ for theme in hicolor Adwaita; do
         cp -RL "${BREW_PREFIX}/share/icons/${theme}" "${RES_DIR}/share/icons/"
         rm -f "${RES_DIR}/share/icons/${theme}/icon-theme.cache"
         rm -rf "${RES_DIR}/share/icons/${theme}/cursors"
+    else
+        echo "error: icon theme '${theme}' not found at ${BREW_PREFIX}/share/icons/${theme}" >&2
+        echo "error: install it with: brew install ${theme}-icon-theme" >&2
+        exit 1
     fi
 done
 
