@@ -65,10 +65,7 @@ pub enum ApiError {
 impl ApiError {
     /// Whether the underlying problem is a stale/expired token.
     pub fn is_auth(&self) -> bool {
-        matches!(
-            self,
-            ApiError::Unauthorized(_) | ApiError::Forbidden(_)
-        )
+        matches!(self, ApiError::Unauthorized(_) | ApiError::Forbidden(_))
     }
 }
 
@@ -296,9 +293,7 @@ impl ApiClient {
 /// The batch "track-ids" form helper: repeats the key per id, as the reference
 /// client does.
 pub fn ids_form<'a>(key: &'a str, ids: &[Id]) -> Vec<(&'a str, String)> {
-    ids.iter()
-        .map(|id| (key, id.0.clone()))
-        .collect::<Vec<_>>()
+    ids.iter().map(|id| (key, id.0.clone())).collect::<Vec<_>>()
 }
 
 #[cfg(test)]
@@ -319,7 +314,10 @@ mod tests {
         let form = ids_form("track-ids", &[Id("1".into()), Id("2".into())]);
         assert_eq!(
             form,
-            vec![("track-ids", "1".to_string()), ("track-ids", "2".to_string())]
+            vec![
+                ("track-ids", "1".to_string()),
+                ("track-ids", "2".to_string())
+            ]
         );
     }
 }

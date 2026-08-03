@@ -79,7 +79,8 @@ impl LoginView {
     /// Show the device code and where to enter it.
     pub fn show_code(&self, user_code: &str, verification_url: &str) {
         let escaped_url = glib::markup_escape_text(verification_url);
-        self.code_label.set_markup(&format!("<big><b>{user_code}</b></big>"));
+        self.code_label
+            .set_markup(&format!("<big><b>{user_code}</b></big>"));
         self.url_label.set_markup(&format!(
             "Open <a href=\"{escaped_url}\">{escaped_url}</a> and enter this code"
         ));

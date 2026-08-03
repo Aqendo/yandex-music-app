@@ -42,9 +42,13 @@ pub enum RemoteCommand {
     Next,
     Previous,
     /// Relative seek in seconds (MPRIS `Seek`).
-    SeekRelative { offset_seconds: i64 },
+    SeekRelative {
+        offset_seconds: i64,
+    },
     /// Absolute seek in seconds (MPRIS `SetPosition`).
-    SetPosition { seconds: u64 },
+    SetPosition {
+        seconds: u64,
+    },
     SetVolume(f64),
     Quit,
     Raise,
@@ -63,10 +67,7 @@ pub enum AppEvent {
     /// Login (or token refresh) failed.
     LoginFailed { message: String },
     /// The account is authenticated and ready.
-    AccountReady {
-        uid: i64,
-        display_name: String,
-    },
+    AccountReady { uid: i64, display_name: String },
     /// Search results for a query.
     SearchResults {
         query: String,
@@ -80,7 +81,10 @@ pub enum AppEvent {
     /// The user's playlists.
     Playlists { playlists: Vec<Playlist> },
     /// A fresh "My Wave" batch.
-    WaveBatch { batch_id: Option<String>, tracks: Vec<Track> },
+    WaveBatch {
+        batch_id: Option<String>,
+        tracks: Vec<Track>,
+    },
     /// The restored "My Wave" mood preset (from saved config), to highlight the
     /// active vibe in the UI.
     WaveMood { mood: String },
@@ -91,7 +95,11 @@ pub enum AppEvent {
     /// The pipeline play/pause state changed.
     PlayStateChanged { playing: bool },
     /// A like/dislike change was applied server-side.
-    TrackLikeChanged { id: String, liked: bool, disliked: bool },
+    TrackLikeChanged {
+        id: String,
+        liked: bool,
+        disliked: bool,
+    },
     /// The worker resolved a direct stream URL for a track.
     TrackStreamReady { track: Track, url: String },
     /// The current track reached the end of its stream.

@@ -186,129 +186,128 @@ fn build_ui(app: &adw::Application) {
             last_seek_ms.set(now_millis());
         });
     }
-    let handle_event = move |event: AppEvent| {
-        match event {
-            AppEvent::NeedsLogin => {
-                stack_for_events.set_visible_child_name("login");
-            }
-            AppEvent::LoginCode {
-                user_code,
-                verification_url,
-            } => {
-                login_for_events.show_code(&user_code, &verification_url);
-                stack_for_events.set_visible_child_name("login");
-            }
-            AppEvent::LoginFailed { message } => {
-                login_for_events.set_error(&message);
-                stack_for_events.set_visible_child_name("login");
-            }
-            AppEvent::AccountReady { uid, display_name } => {
-                login_for_events.reset();
-                main_for_events.set_account(uid, &display_name);
-                sign_out_for_events.set_visible(true);
-                stack_for_events.set_visible_child_name("main");
-                worker_for_events.send(WorkerCommand::FetchLiked);
-                if std::env::var("YM_AUTOWAVE").is_ok() {
-                    worker_for_events.send(WorkerCommand::FetchWave { queue: None });
-                }
-            }
-            AppEvent::LikedTracks { tracks } => main_for_events.set_liked(&tracks),
-            AppEvent::Playlists { playlists } => main_for_events.set_playlists(&playlists),
-            AppEvent::SearchResults {
-                query,
-                tracks,
-                albums,
-                artists,
-                playlists,
-            } => main_for_events.set_search_results(
-                &query,
-                &tracks,
-                &albums,
-                &artists,
-                &playlists,
-            ),
-            AppEvent::NowPlaying { track } => {
-                main_for_events.set_now_playing(&track);
-                main_for_events.set_playing(true);
-                mpris_for_events.set_track(&track);
-                mpris_for_events.set_playing(true);
-                if let Some(handle) = tray_handle.as_ref() {
-                    handle.update(|tray| tray.set_track(&track));
-                    handle.update(|tray| tray.set_playing(true));
-                }
-            }
-            AppEvent::PlayStateChanged { playing } => {
-                main_for_events.set_playing(playing);
-                mpris_for_events.set_playing(playing);
-                if let Some(handle) = tray_handle.as_ref() {
-                    handle.update(|tray| tray.set_playing(playing));
-                }
-            }
-            AppEvent::RemoteCommand(command) => match command {
-                RemoteCommand::Play => playback_for_events.play(),
-                RemoteCommand::Pause => playback_for_events.pause(),
-                RemoteCommand::Toggle => playback_for_events.toggle(),
-                RemoteCommand::Next => {
-                    playback_for_events.next();
-                }
-                RemoteCommand::Previous => playback_for_events.prev(),
-                RemoteCommand::SeekRelative { offset_seconds } => {
-                    playback_for_events.seek_relative(offset_seconds);
-                }
-                RemoteCommand::SetPosition { seconds } => {
-                    playback_for_events.seek_seconds(seconds);
-                }
-                RemoteCommand::SetVolume(volume) => playback_for_events.set_volume(volume),
-                RemoteCommand::Quit => app_for_events.quit(),
-                RemoteCommand::Raise => window_for_events.present(),
-            },
-            AppEvent::TrackStreamReady { track, url } => {
-                playback_for_events.on_stream_ready(track, url);
-            }
-            AppEvent::PlaybackEnded => {
-                if std::env::var("YM_DEBUG").is_ok() {
-                    eprintln!("[dbg] EOS -> next()");
-                }
-                playback_for_events.next();
-            }
-            AppEvent::WaveBatch { batch_id: _, tracks } => {
-                wave_active.set(true);
-                if wave_restart.replace(false) || !wave_started.replace(true) {
-                    main_for_events.set_wave(&tracks);
-                    playback_for_events.play_queue(tracks, 0);
-                } else {
-                    main_for_events.append_wave(&tracks);
-                    playback_for_events.append_tracks(&tracks);
-                    if wave_continue.replace(false) {
-                        playback_for_events.continue_after_batch();
-                    }
-                }
-            }
-            AppEvent::WaveMood { mood } => {
-                main_for_events.set_wave_mood(&mood);
-            }
-            AppEvent::WaveMoodApplied { mood } => {
-                main_for_events.set_wave_mood(&mood);
-                wave_restart.set(true);
+    let handle_event = move |event: AppEvent| match event {
+        AppEvent::NeedsLogin => {
+            stack_for_events.set_visible_child_name("login");
+        }
+        AppEvent::LoginCode {
+            user_code,
+            verification_url,
+        } => {
+            login_for_events.show_code(&user_code, &verification_url);
+            stack_for_events.set_visible_child_name("login");
+        }
+        AppEvent::LoginFailed { message } => {
+            login_for_events.set_error(&message);
+            stack_for_events.set_visible_child_name("login");
+        }
+        AppEvent::AccountReady { uid, display_name } => {
+            login_for_events.reset();
+            main_for_events.set_account(uid, &display_name);
+            sign_out_for_events.set_visible(true);
+            stack_for_events.set_visible_child_name("main");
+            worker_for_events.send(WorkerCommand::FetchLiked);
+            if std::env::var("YM_AUTOWAVE").is_ok() {
                 worker_for_events.send(WorkerCommand::FetchWave { queue: None });
             }
-            AppEvent::TrackLikeChanged { id, liked, disliked } => {
-                main_for_events.set_track_like(&id, liked, disliked);
+        }
+        AppEvent::LikedTracks { tracks } => main_for_events.set_liked(&tracks),
+        AppEvent::Playlists { playlists } => main_for_events.set_playlists(&playlists),
+        AppEvent::SearchResults {
+            query,
+            tracks,
+            albums,
+            artists,
+            playlists,
+        } => main_for_events.set_search_results(&query, &tracks, &albums, &artists, &playlists),
+        AppEvent::NowPlaying { track } => {
+            main_for_events.set_now_playing(&track);
+            main_for_events.set_playing(true);
+            mpris_for_events.set_track(&track);
+            mpris_for_events.set_playing(true);
+            if let Some(handle) = tray_handle.as_ref() {
+                handle.update(|tray| tray.set_track(&track));
+                handle.update(|tray| tray.set_playing(true));
             }
-            AppEvent::PlaybackError { message } => {
-                let toast = adw::Toast::new(&message);
-                toast.set_title("Playback error");
-                toast.set_timeout(8);
-                toast_for_events.add_toast(toast);
+        }
+        AppEvent::PlayStateChanged { playing } => {
+            main_for_events.set_playing(playing);
+            mpris_for_events.set_playing(playing);
+            if let Some(handle) = tray_handle.as_ref() {
+                handle.update(|tray| tray.set_playing(playing));
             }
-            AppEvent::CoverReady { url, bytes } => {
-                main_for_events.on_cover_ready(&url, bytes);
+        }
+        AppEvent::RemoteCommand(command) => match command {
+            RemoteCommand::Play => playback_for_events.play(),
+            RemoteCommand::Pause => playback_for_events.pause(),
+            RemoteCommand::Toggle => playback_for_events.toggle(),
+            RemoteCommand::Next => {
+                playback_for_events.next();
             }
-            AppEvent::OperationFailed { message } => {
-                let toast = adw::Toast::new(&message);
-                toast.set_timeout(5);
-                toast_for_events.add_toast(toast);
+            RemoteCommand::Previous => playback_for_events.prev(),
+            RemoteCommand::SeekRelative { offset_seconds } => {
+                playback_for_events.seek_relative(offset_seconds);
             }
+            RemoteCommand::SetPosition { seconds } => {
+                playback_for_events.seek_seconds(seconds);
+            }
+            RemoteCommand::SetVolume(volume) => playback_for_events.set_volume(volume),
+            RemoteCommand::Quit => app_for_events.quit(),
+            RemoteCommand::Raise => window_for_events.present(),
+        },
+        AppEvent::TrackStreamReady { track, url } => {
+            playback_for_events.on_stream_ready(track, url);
+        }
+        AppEvent::PlaybackEnded => {
+            if std::env::var("YM_DEBUG").is_ok() {
+                eprintln!("[dbg] EOS -> next()");
+            }
+            playback_for_events.next();
+        }
+        AppEvent::WaveBatch {
+            batch_id: _,
+            tracks,
+        } => {
+            wave_active.set(true);
+            if wave_restart.replace(false) || !wave_started.replace(true) {
+                main_for_events.set_wave(&tracks);
+                playback_for_events.play_queue(tracks, 0);
+            } else {
+                main_for_events.append_wave(&tracks);
+                playback_for_events.append_tracks(&tracks);
+                if wave_continue.replace(false) {
+                    playback_for_events.continue_after_batch();
+                }
+            }
+        }
+        AppEvent::WaveMood { mood } => {
+            main_for_events.set_wave_mood(&mood);
+        }
+        AppEvent::WaveMoodApplied { mood } => {
+            main_for_events.set_wave_mood(&mood);
+            wave_restart.set(true);
+            worker_for_events.send(WorkerCommand::FetchWave { queue: None });
+        }
+        AppEvent::TrackLikeChanged {
+            id,
+            liked,
+            disliked,
+        } => {
+            main_for_events.set_track_like(&id, liked, disliked);
+        }
+        AppEvent::PlaybackError { message } => {
+            let toast = adw::Toast::new(&message);
+            toast.set_title("Playback error");
+            toast.set_timeout(8);
+            toast_for_events.add_toast(toast);
+        }
+        AppEvent::CoverReady { url, bytes } => {
+            main_for_events.on_cover_ready(&url, bytes);
+        }
+        AppEvent::OperationFailed { message } => {
+            let toast = adw::Toast::new(&message);
+            toast.set_timeout(5);
+            toast_for_events.add_toast(toast);
         }
     };
 
@@ -333,7 +332,8 @@ fn build_ui(app: &adw::Application) {
         let position = playback.position();
         main_for_poll.update_progress(position, playback.duration());
         if let Some(position) = position {
-            let settled = now_millis().saturating_sub(last_seek_ms_for_poll.get()) > SEEK_COOLDOWN_MS;
+            let settled =
+                now_millis().saturating_sub(last_seek_ms_for_poll.get()) > SEEK_COOLDOWN_MS;
             if settled {
                 mpris_for_poll.set_position_secs(position.seconds());
             }

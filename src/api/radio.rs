@@ -34,7 +34,8 @@ pub const LANGUAGES: [&str; 3] = ["not-russian", "russian", "any"];
 impl ApiClient {
     /// Fetch info about a station, including its personalization settings.
     pub async fn rotor_station_info(&self, station: &str) -> Result<Vec<StationResult>, ApiError> {
-        self.get(&format!("/rotor/station/{station}/info"), &[]).await
+        self.get(&format!("/rotor/station/{station}/info"), &[])
+            .await
     }
 
     /// Pull the next batch of tracks for a station.
@@ -51,7 +52,8 @@ impl ApiClient {
             Some(queue) => query.push(("queue", queue)),
             None => query.push(("settings2", "true".to_string())),
         }
-        self.get(&format!("/rotor/station/{station}/tracks"), &query).await
+        self.get(&format!("/rotor/station/{station}/tracks"), &query)
+            .await
     }
 
     /// Send listening feedback for a station.
@@ -107,9 +109,9 @@ impl ApiClient {
             "language": language,
             "type": "rotor",
         });
-        let _: serde_json::Value =
-            self.post_json(&format!("/rotor/station/{station}/settings3"), &body)
-                .await?;
+        let _: serde_json::Value = self
+            .post_json(&format!("/rotor/station/{station}/settings3"), &body)
+            .await?;
         Ok(())
     }
 }

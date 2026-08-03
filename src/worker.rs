@@ -91,10 +91,13 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                 };
                 match client.account_status().await {
                     Ok(status) => {
-                        post(&ev, AppEvent::AccountReady {
-                            uid: status.account.uid.unwrap_or_default(),
-                            display_name: status.account.display_name,
-                        });
+                        post(
+                            &ev,
+                            AppEvent::AccountReady {
+                                uid: status.account.uid.unwrap_or_default(),
+                                display_name: status.account.display_name,
+                            },
+                        );
                     }
                     Err(err) if err.is_auth() => {
                         let refreshed = match tokens.refresh_token.as_deref() {
@@ -109,17 +112,23 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                                 persist_tokens(client.tokens());
                                 match client.account_status().await {
                                     Ok(status) => {
-                                        post(&ev, AppEvent::AccountReady {
-                                            uid: status.account.uid.unwrap_or_default(),
-                                            display_name: status.account.display_name,
-                                        });
+                                        post(
+                                            &ev,
+                                            AppEvent::AccountReady {
+                                                uid: status.account.uid.unwrap_or_default(),
+                                                display_name: status.account.display_name,
+                                            },
+                                        );
                                     }
                                     Err(e) => {
                                         client.set_tokens(None);
                                         persist_tokens(None);
-                                        post(&ev, AppEvent::LoginFailed {
-                                            message: e.to_string(),
-                                        });
+                                        post(
+                                            &ev,
+                                            AppEvent::LoginFailed {
+                                                message: e.to_string(),
+                                            },
+                                        );
                                         post(&ev, AppEvent::NeedsLogin);
                                     }
                                 }
@@ -127,13 +136,23 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                             Err(e) => {
                                 client.set_tokens(None);
                                 persist_tokens(None);
-                                post(&ev, AppEvent::LoginFailed { message: e.to_string() });
+                                post(
+                                    &ev,
+                                    AppEvent::LoginFailed {
+                                        message: e.to_string(),
+                                    },
+                                );
                                 post(&ev, AppEvent::NeedsLogin);
                             }
                         }
                     }
                     Err(e) => {
-                        post(&ev, AppEvent::OperationFailed { message: e.to_string() });
+                        post(
+                            &ev,
+                            AppEvent::OperationFailed {
+                                message: e.to_string(),
+                            },
+                        );
                     }
                 }
             }
@@ -146,10 +165,13 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                 let handle = tokio::spawn(async move {
                     let result = client
                         .device_auth(|code| {
-                            post(&ev, AppEvent::LoginCode {
-                                user_code: code.user_code.clone(),
-                                verification_url: code.verification_url.clone(),
-                            });
+                            post(
+                                &ev,
+                                AppEvent::LoginCode {
+                                    user_code: code.user_code.clone(),
+                                    verification_url: code.verification_url.clone(),
+                                },
+                            );
                         })
                         .await;
                     match result {
@@ -158,18 +180,31 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                             persist_tokens(client.tokens());
                             match client.account_status().await {
                                 Ok(status) => {
-                                    post(&ev, AppEvent::AccountReady {
-                                        uid: status.account.uid.unwrap_or_default(),
-                                        display_name: status.account.display_name,
-                                    });
+                                    post(
+                                        &ev,
+                                        AppEvent::AccountReady {
+                                            uid: status.account.uid.unwrap_or_default(),
+                                            display_name: status.account.display_name,
+                                        },
+                                    );
                                 }
                                 Err(e) => {
-                                    post(&ev, AppEvent::LoginFailed { message: e.to_string() });
+                                    post(
+                                        &ev,
+                                        AppEvent::LoginFailed {
+                                            message: e.to_string(),
+                                        },
+                                    );
                                 }
                             }
                         }
                         Err(e) => {
-                            post(&ev, AppEvent::LoginFailed { message: e.to_string() });
+                            post(
+                                &ev,
+                                AppEvent::LoginFailed {
+                                    message: e.to_string(),
+                                },
+                            );
                         }
                     }
                 });
@@ -209,71 +244,95 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                                 }
                             }
                         }
-                        post(&ev, AppEvent::SearchResults {
-                            query: text,
-                            tracks,
-                            albums: search.albums.map(|b| b.results).unwrap_or_default(),
-                            artists: search.artists.map(|b| b.results).unwrap_or_default(),
-                            playlists: search.playlists.map(|b| b.results).unwrap_or_default(),
-                        });
+                        post(
+                            &ev,
+                            AppEvent::SearchResults {
+                                query: text,
+                                tracks,
+                                albums: search.albums.map(|b| b.results).unwrap_or_default(),
+                                artists: search.artists.map(|b| b.results).unwrap_or_default(),
+                                playlists: search.playlists.map(|b| b.results).unwrap_or_default(),
+                            },
+                        );
                     }
                     Err(e) => {
-                        post(&ev, AppEvent::OperationFailed { message: e.to_string() });
+                        post(
+                            &ev,
+                            AppEvent::OperationFailed {
+                                message: e.to_string(),
+                            },
+                        );
                     }
                 }
             }
-            WorkerCommand::FetchLiked => {
-                match client.users_likes_tracks().await {
-                    Ok(refs) => {
-                        *liked_ids.lock().unwrap() = refs
-                            .iter()
-                            .filter_map(|t| t.id.as_ref().map(|id| id.0.clone()))
-                            .collect();
-                        likes_loaded = true;
-                        match client.hydrate_tracks(&refs).await {
-                            Ok(tracks) => {
-                                let tracks = tracks
-                                    .into_iter()
-                                    .map(|mut t| {
-                                        t.liked = Some(true);
-                                        t
-                                    })
-                                    .collect();
-                                post(&ev, AppEvent::LikedTracks { tracks });
-                            }
-                            Err(e) => {
-                                post(&ev, AppEvent::OperationFailed { message: e.to_string() });
-                            }
+            WorkerCommand::FetchLiked => match client.users_likes_tracks().await {
+                Ok(refs) => {
+                    *liked_ids.lock().unwrap() = refs
+                        .iter()
+                        .filter_map(|t| t.id.as_ref().map(|id| id.0.clone()))
+                        .collect();
+                    likes_loaded = true;
+                    match client.hydrate_tracks(&refs).await {
+                        Ok(tracks) => {
+                            let tracks = tracks
+                                .into_iter()
+                                .map(|mut t| {
+                                    t.liked = Some(true);
+                                    t
+                                })
+                                .collect();
+                            post(&ev, AppEvent::LikedTracks { tracks });
+                        }
+                        Err(e) => {
+                            post(
+                                &ev,
+                                AppEvent::OperationFailed {
+                                    message: e.to_string(),
+                                },
+                            );
                         }
                     }
-                    Err(e) => {
-                        post(&ev, AppEvent::OperationFailed { message: e.to_string() });
-                    }
                 }
-            }
-            WorkerCommand::FetchPlaylists => {
-                match client.users_playlists_list().await {
-                    Ok(playlists) => {
-                        post(&ev, AppEvent::Playlists { playlists });
-                    }
-                    Err(e) => {
-                        post(&ev, AppEvent::OperationFailed { message: e.to_string() });
-                    }
+                Err(e) => {
+                    post(
+                        &ev,
+                        AppEvent::OperationFailed {
+                            message: e.to_string(),
+                        },
+                    );
                 }
-            }
-            WorkerCommand::PlayTrack { track } => {
-                match client.resolve_track_stream(&track).await {
-                    Ok(url) => post(&ev, AppEvent::TrackStreamReady { track, url }),
-                    Err(e) => post(&ev, AppEvent::PlaybackError { message: e.to_string() }),
+            },
+            WorkerCommand::FetchPlaylists => match client.users_playlists_list().await {
+                Ok(playlists) => {
+                    post(&ev, AppEvent::Playlists { playlists });
                 }
-            }
+                Err(e) => {
+                    post(
+                        &ev,
+                        AppEvent::OperationFailed {
+                            message: e.to_string(),
+                        },
+                    );
+                }
+            },
+            WorkerCommand::PlayTrack { track } => match client.resolve_track_stream(&track).await {
+                Ok(url) => post(&ev, AppEvent::TrackStreamReady { track, url }),
+                Err(e) => post(
+                    &ev,
+                    AppEvent::PlaybackError {
+                        message: e.to_string(),
+                    },
+                ),
+            },
             WorkerCommand::SetLike { id, liked } => {
                 let id_ref = Id(id.clone());
                 let result = if liked {
                     // The API clears any existing dislike automatically.
                     client.likes_tracks_add(std::slice::from_ref(&id_ref)).await
                 } else {
-                    client.likes_tracks_remove(std::slice::from_ref(&id_ref)).await
+                    client
+                        .likes_tracks_remove(std::slice::from_ref(&id_ref))
+                        .await
                 };
                 match result {
                     Ok(()) => {
@@ -283,32 +342,63 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                         } else {
                             ids.remove(&id);
                         }
-                        post(&ev, AppEvent::TrackLikeChanged { id, liked, disliked: false });
+                        post(
+                            &ev,
+                            AppEvent::TrackLikeChanged {
+                                id,
+                                liked,
+                                disliked: false,
+                            },
+                        );
                     }
-                    Err(e) => post(&ev, AppEvent::OperationFailed { message: e.to_string() }),
+                    Err(e) => post(
+                        &ev,
+                        AppEvent::OperationFailed {
+                            message: e.to_string(),
+                        },
+                    ),
                 }
             }
             WorkerCommand::SetDislike { id, disliked } => {
                 let id_ref = Id(id.clone());
                 let result = if disliked {
                     // The API clears any existing like automatically.
-                    client.dislikes_tracks_add(std::slice::from_ref(&id_ref)).await
+                    client
+                        .dislikes_tracks_add(std::slice::from_ref(&id_ref))
+                        .await
                 } else {
-                    client.dislikes_tracks_remove(std::slice::from_ref(&id_ref)).await
+                    client
+                        .dislikes_tracks_remove(std::slice::from_ref(&id_ref))
+                        .await
                 };
                 match result {
                     Ok(()) => {
                         liked_ids.lock().unwrap().remove(&id);
-                        post(&ev, AppEvent::TrackLikeChanged { id, liked: false, disliked });
+                        post(
+                            &ev,
+                            AppEvent::TrackLikeChanged {
+                                id,
+                                liked: false,
+                                disliked,
+                            },
+                        );
                     }
-                    Err(e) => post(&ev, AppEvent::OperationFailed { message: e.to_string() }),
+                    Err(e) => post(
+                        &ev,
+                        AppEvent::OperationFailed {
+                            message: e.to_string(),
+                        },
+                    ),
                 }
             }
             WorkerCommand::SetVibe { mood } => {
                 let current = config::load_config();
                 let diversity = current.wave_diversity.unwrap_or_else(|| "default".into());
                 let language = current.wave_language.unwrap_or_else(|| "any".into());
-                match client.rotor_station_settings(MY_WAVE, &mood, &diversity, &language).await {
+                match client
+                    .rotor_station_settings(MY_WAVE, &mood, &diversity, &language)
+                    .await
+                {
                     Ok(()) => {
                         let mut cfg = config::load_config();
                         cfg.wave_mood = Some(mood.clone());
@@ -319,7 +409,12 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                         post(&ev, AppEvent::WaveMoodApplied { mood });
                     }
                     Err(e) => {
-                        post(&ev, AppEvent::OperationFailed { message: e.to_string() });
+                        post(
+                            &ev,
+                            AppEvent::OperationFailed {
+                                message: e.to_string(),
+                            },
+                        );
                     }
                 }
             }
@@ -366,13 +461,21 @@ async fn worker_loop(mut rx: mpsc::Receiver<WorkerCommand>, ev: EventSink) {
                                 }
                             }
                         }
-                        post(&ev, AppEvent::WaveBatch {
-                            batch_id: result.batch_id,
-                            tracks,
-                        });
+                        post(
+                            &ev,
+                            AppEvent::WaveBatch {
+                                batch_id: result.batch_id,
+                                tracks,
+                            },
+                        );
                     }
                     Err(e) => {
-                        post(&ev, AppEvent::OperationFailed { message: e.to_string() });
+                        post(
+                            &ev,
+                            AppEvent::OperationFailed {
+                                message: e.to_string(),
+                            },
+                        );
                     }
                 }
             }

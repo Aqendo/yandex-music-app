@@ -88,7 +88,9 @@ impl KsniTray for Tray {
             StandardItem {
                 label: "Previous".into(),
                 activate: Box::new(|tray: &mut Self| {
-                    let _ = tray.ev.send(AppEvent::RemoteCommand(RemoteCommand::Previous));
+                    let _ = tray
+                        .ev
+                        .send(AppEvent::RemoteCommand(RemoteCommand::Previous));
                 }),
                 ..Default::default()
             }

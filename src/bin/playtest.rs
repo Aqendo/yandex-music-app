@@ -14,7 +14,11 @@ use ymapp::state::{AppEvent, WorkerCommand};
 use ymapp::worker::{EventSink, Worker};
 
 fn artist(track: &ymapp::api::models::Track) -> String {
-    track.artists.first().map(|a| a.name.clone()).unwrap_or_default()
+    track
+        .artists
+        .first()
+        .map(|a| a.name.clone())
+        .unwrap_or_default()
 }
 
 fn main() {
@@ -41,7 +45,11 @@ fn main() {
         .iter()
         .filter_map(|item| item.track.clone())
         .collect();
-    println!("[playtest] batch {} tracks {}", batch.batch_id.unwrap_or_default(), tracks.len());
+    println!(
+        "[playtest] batch {} tracks {}",
+        batch.batch_id.unwrap_or_default(),
+        tracks.len()
+    );
 
     let errors: std::rc::Rc<std::cell::RefCell<Vec<String>>> =
         std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
@@ -63,7 +71,10 @@ fn main() {
         });
     }
 
-    let rate: f64 = std::env::args().nth(1).and_then(|a| a.parse().ok()).unwrap_or(1.0);
+    let rate: f64 = std::env::args()
+        .nth(1)
+        .and_then(|a| a.parse().ok())
+        .unwrap_or(1.0);
     let next_at: Option<f64> = std::env::args().nth(2).and_then(|a| a.parse().ok());
     if let Some(secs) = next_at {
         let playback_for_next = playback.clone();
@@ -132,8 +143,14 @@ fn main() {
                 .and_then(|t| t.id)
                 .map(|i| i.0.clone())
                 .unwrap_or_default();
-            let pos = playback_for_log.position().map(|p| p.seconds()).unwrap_or(0);
-            let dur = playback_for_log.duration().map(|d| d.seconds()).unwrap_or(0);
+            let pos = playback_for_log
+                .position()
+                .map(|p| p.seconds())
+                .unwrap_or(0);
+            let dur = playback_for_log
+                .duration()
+                .map(|d| d.seconds())
+                .unwrap_or(0);
             println!(
                 "[playtest] pos {pos}s / {dur}s track {id} playing={}",
                 playback_for_log.is_playing()

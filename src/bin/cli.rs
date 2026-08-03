@@ -66,7 +66,11 @@ fn authenticated() -> ApiClient {
 }
 
 fn artist_name(track: &ymapp::api::Track) -> &str {
-    track.artists.first().map(|a| a.name.as_str()).unwrap_or("Unknown")
+    track
+        .artists
+        .first()
+        .map(|a| a.name.as_str())
+        .unwrap_or("Unknown")
 }
 
 async fn cmd_login() -> Result<(), Box<dyn Error>> {
@@ -87,7 +91,8 @@ async fn cmd_login() -> Result<(), Box<dyn Error>> {
     let status = client.account_status().await?;
     println!(
         "Logged in as {} (uid {})",
-        status.account.display_name, status.account.uid.unwrap_or_default()
+        status.account.display_name,
+        status.account.uid.unwrap_or_default()
     );
     Ok(())
 }
@@ -110,7 +115,15 @@ async fn cmd_search(query: &str) -> Result<(), Box<dyn Error>> {
     if let Some(albums) = &search.albums {
         println!("Albums ({} total):", albums.total.unwrap_or(0));
         for album in albums.results.iter().take(5) {
-            println!("  {} — {}", album.title, album.artists.first().map(|a| a.name.as_str()).unwrap_or("?"));
+            println!(
+                "  {} — {}",
+                album.title,
+                album
+                    .artists
+                    .first()
+                    .map(|a| a.name.as_str())
+                    .unwrap_or("?")
+            );
         }
     }
     Ok(())
@@ -192,15 +205,30 @@ async fn cmd_waveurls() -> Result<(), Box<dyn Error>> {
     let client = authenticated();
     let _ = client.account_status().await?;
     let batch = client.rotor_station_tracks(MY_WAVE, None).await?;
-    let tracks: Vec<_> = batch.sequence.iter().filter_map(|i| i.track.clone()).collect();
-    println!("batch {} | tracks {}", batch.batch_id.unwrap_or_default(), tracks.len());
+    let tracks: Vec<_> = batch
+        .sequence
+        .iter()
+        .filter_map(|i| i.track.clone())
+        .collect();
+    println!(
+        "batch {} | tracks {}",
+        batch.batch_id.unwrap_or_default(),
+        tracks.len()
+    );
     for (n, t) in tracks.iter().enumerate() {
         let id = t.id.as_ref().map(|i| i.0.clone()).unwrap_or_default();
         match client.resolve_track_stream(t).await {
-            Ok(url) => println!("{n}: {id} | {} — {} | available={} | {url}",
-                t.title, artist_name(t), t.available.map(|a| a.to_string()).unwrap_or_default()),
-            Err(e) => println!("{n}: {id} | {} — {} | RESOLVE ERROR: {e}",
-                t.title, artist_name(t)),
+            Ok(url) => println!(
+                "{n}: {id} | {} — {} | available={} | {url}",
+                t.title,
+                artist_name(t),
+                t.available.map(|a| a.to_string()).unwrap_or_default()
+            ),
+            Err(e) => println!(
+                "{n}: {id} | {} — {} | RESOLVE ERROR: {e}",
+                t.title,
+                artist_name(t)
+            ),
         }
     }
     Ok(())
@@ -217,13 +245,21 @@ async fn cmd_settings() -> Result<(), Box<dyn Error>> {
                 if let Some(mood) = &restrictions.mood_energy {
                     println!("Mood available:");
                     for v in &mood.possible_values {
-                        println!("  {} ({})", v.name.as_deref().unwrap_or("?"), v.value.as_deref().unwrap_or("?"));
+                        println!(
+                            "  {} ({})",
+                            v.name.as_deref().unwrap_or("?"),
+                            v.value.as_deref().unwrap_or("?")
+                        );
                     }
                 }
                 if let Some(div) = &restrictions.diversity {
                     println!("Diversity available:");
                     for v in &div.possible_values {
-                        println!("  {} ({})", v.name.as_deref().unwrap_or("?"), v.value.as_deref().unwrap_or("?"));
+                        println!(
+                            "  {} ({})",
+                            v.name.as_deref().unwrap_or("?"),
+                            v.value.as_deref().unwrap_or("?")
+                        );
                     }
                 }
             }
@@ -243,7 +279,9 @@ async fn cmd_settings() -> Result<(), Box<dyn Error>> {
 async fn cmd_setmood(mood: &str) -> Result<(), Box<dyn Error>> {
     let client = authenticated();
     let _ = client.account_status().await?;
-    client.rotor_station_settings(MY_WAVE, mood, "default", "any").await?;
+    client
+        .rotor_station_settings(MY_WAVE, mood, "default", "any")
+        .await?;
     println!("mood set to {mood}");
     let batch = client.rotor_station_tracks(MY_WAVE, None).await?;
     for item in batch.sequence.iter().take(6) {
