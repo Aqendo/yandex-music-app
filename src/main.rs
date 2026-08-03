@@ -78,7 +78,18 @@ fn setup_macos_bundle_env() {
     if !resources.join("lib").is_dir() {
         return;
     }
-    std::env::set_var("GST_PLUGIN_PATH", resources.join("lib/gstreamer-1.0"));
+    let plugin_dir = resources.join("lib/gstreamer-1.0");
+    std::env::set_var("GST_PLUGIN_PATH", &plugin_dir);
+    std::env::set_var("GST_PLUGIN_SYSTEM_PATH", &plugin_dir);
+    if let Some(dir) = exe.parent() {
+        std::env::set_var("GST_PLUGIN_SCANNER", dir.join("gst-plugin-scanner"));
+    }
+    if let Ok(home) = std::env::var("HOME") {
+        std::env::set_var(
+            "GST_REGISTRY",
+            format!("{home}/Library/Caches/dev.ymapp.yandex-music/gstreamer-registry.bin"),
+        );
+    }
     std::env::set_var(
         "GDK_PIXBUF_MODULE_FILE",
         resources.join("lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"),
