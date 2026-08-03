@@ -47,7 +47,8 @@ pub fn save_config(config: &ConfigFile) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| format!("cannot create config dir: {e}"))?;
     }
-    let json = serde_json::to_string_pretty(config).map_err(|e| format!("cannot serialize config: {e}"))?;
+    let json = serde_json::to_string_pretty(config)
+        .map_err(|e| format!("cannot serialize config: {e}"))?;
     fs::write(&path, json).map_err(|e| format!("cannot write {}: {e}", path.display()))
 }
 
@@ -65,7 +66,9 @@ pub fn device_id() -> String {
 
 fn random_alnum(len: usize) -> String {
     let mut rng = rand::thread_rng();
-    std::iter::repeat_with(|| rng.sample(Alphanumeric) as char).take(len).collect()
+    std::iter::repeat_with(|| rng.sample(Alphanumeric) as char)
+        .take(len)
+        .collect()
 }
 
 #[cfg(test)]

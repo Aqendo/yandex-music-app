@@ -32,9 +32,7 @@ impl ApiClient {
     /// Fetch the liked tracks (references only).
     pub async fn users_likes_tracks(&self) -> Result<Vec<TrackShort>, ApiError> {
         let uid = required_uid(self)?;
-        let response: LikesResponse = self
-            .get(&format!("/users/{uid}/likes/tracks"), &[])
-            .await?;
+        let response: LikesResponse = self.get(&format!("/users/{uid}/likes/tracks"), &[]).await?;
         Ok(response.library.unwrap_or_default().tracks)
     }
 
@@ -83,11 +81,11 @@ impl ApiClient {
     }
 
     /// Hydrate a list of track references into full tracks.
-    pub async fn hydrate_tracks(&self, refs: &[TrackShort]) -> Result<Vec<crate::api::Track>, ApiError> {
-        let ids: Vec<Id> = refs
-            .iter()
-            .filter_map(|t| t.id.clone())
-            .collect::<Vec<_>>();
+    pub async fn hydrate_tracks(
+        &self,
+        refs: &[TrackShort],
+    ) -> Result<Vec<crate::api::Track>, ApiError> {
+        let ids: Vec<Id> = refs.iter().filter_map(|t| t.id.clone()).collect::<Vec<_>>();
         if ids.is_empty() {
             return Ok(Vec::new());
         }

@@ -8,8 +8,8 @@
 use std::sync::mpsc::Sender;
 
 use mpris_server::{Metadata, PlaybackStatus, Player, Time, TrackId, Volume};
-use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::mpsc::unbounded_channel;
+use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::api::models::Track;
 use crate::state::{AppEvent, RemoteCommand};
@@ -80,7 +80,9 @@ impl Mpris {
     }
 
     pub fn set_position_secs(&self, seconds: u64) {
-        let _ = self.tx.send(Update::Position(Time::from_secs(seconds as i64)));
+        let _ = self
+            .tx
+            .send(Update::Position(Time::from_secs(seconds as i64)));
     }
 
     pub fn set_volume(&self, volume: f64) {
@@ -89,7 +91,9 @@ impl Mpris {
 
     /// Announce a user-visible seek (MPRIS `Seeked` signal).
     pub fn seeked(&self, seconds: u64) {
-        let _ = self.tx.send(Update::Seeked(Time::from_secs(seconds as i64)));
+        let _ = self
+            .tx
+            .send(Update::Seeked(Time::from_secs(seconds as i64)));
     }
 }
 
@@ -219,7 +223,11 @@ fn metadata_for(
         .chars()
         .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
         .collect::<String>();
-    let safe_id: &str = if safe_id.is_empty() { "unknown" } else { safe_id.as_str() };
+    let safe_id: &str = if safe_id.is_empty() {
+        "unknown"
+    } else {
+        safe_id.as_str()
+    };
     let track_id =
         TrackId::try_from(format!("/dev/ymapp/track/{safe_id}")).unwrap_or(TrackId::NO_TRACK);
     let mut builder = Metadata::builder()

@@ -38,7 +38,8 @@ impl ApiClient {
 
     /// Fetch the available download variants for a track.
     pub async fn tracks_download_info(&self, track_id: &Id) -> Result<Vec<DownloadInfo>, ApiError> {
-        self.get(&format!("/tracks/{track_id}/download-info"), &[]).await
+        self.get(&format!("/tracks/{track_id}/download-info"), &[])
+            .await
     }
 }
 
@@ -90,7 +91,9 @@ fn parse_download_info_xml(xml: &str) -> Result<(String, String, String, String)
         }
     }
     if host.is_empty() || path.is_empty() {
-        return Err(ApiError::BadResponse("download-info XML missing host/path".into()));
+        return Err(ApiError::BadResponse(
+            "download-info XML missing host/path".into(),
+        ));
     }
     Ok((host, path, ts, s))
 }

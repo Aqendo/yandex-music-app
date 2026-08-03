@@ -4,9 +4,12 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use gtk4::prelude::*;
-use gtk4::{Align, Box as GtkBox, Button, Entry, Image, Label, ListBox, ListBoxRow, Orientation, PolicyType, Scale, ScrolledWindow, SelectionMode, Stack};
 use gstreamer::ClockTime;
+use gtk4::prelude::*;
+use gtk4::{
+    Align, Box as GtkBox, Button, Entry, Image, Label, ListBox, ListBoxRow, Orientation,
+    PolicyType, Scale, ScrolledWindow, SelectionMode, Stack,
+};
 
 use crate::api::covers::{album_cover, artist_cover, playlist_cover, track_cover};
 use crate::api::models::{Album, Artist, Playlist, Track};
@@ -110,7 +113,9 @@ impl VibeSelector {
             let button = Button::with_label(label);
             let worker = worker.clone();
             button.connect_clicked(move |_| {
-                worker.send(WorkerCommand::SetVibe { mood: mood.to_string() });
+                worker.send(WorkerCommand::SetVibe {
+                    mood: mood.to_string(),
+                });
             });
             buttons.borrow_mut().push((mood.to_string(), button));
         }
@@ -198,7 +203,8 @@ impl MainView {
         // Content stack.
         let content = Stack::new();
 
-        let (home_page, liked_count_label, liked_list, refresh_liked) = build_list_page("Liked tracks");
+        let (home_page, liked_count_label, liked_list, refresh_liked) =
+            build_list_page("Liked tracks");
         content.add_named(&home_page, Some("home"));
         let (wave_page, wave_count_label, wave_list, wave_tracks, vibe) = build_wave_page(
             worker.clone(),
@@ -310,7 +316,10 @@ impl MainView {
                 if id.is_empty() {
                     return;
                 }
-                worker.send(WorkerCommand::SetLike { id, liked: !state.get() });
+                worker.send(WorkerCommand::SetLike {
+                    id,
+                    liked: !state.get(),
+                });
             });
         }
         {
@@ -322,7 +331,10 @@ impl MainView {
                 if id.is_empty() {
                     return;
                 }
-                worker.send(WorkerCommand::SetDislike { id, disliked: !state.get() });
+                worker.send(WorkerCommand::SetDislike {
+                    id,
+                    disliked: !state.get(),
+                });
             });
         }
 
@@ -474,8 +486,12 @@ impl MainView {
         self.liked_count_label
             .set_text(&format!("Liked tracks: {}", tracks.len()));
         for track in tracks {
-            self.liked_list
-                .append(&track_row(track, &self.covers, &self.worker, &self.like_buttons));
+            self.liked_list.append(&track_row(
+                track,
+                &self.covers,
+                &self.worker,
+                &self.like_buttons,
+            ));
         }
     }
 
@@ -497,17 +513,25 @@ impl MainView {
         self.wave_count_label
             .set_text(&format!("My Wave: {}", tracks.len()));
         for track in tracks {
-            self.wave_list
-                .append(&track_row(track, &self.covers, &self.worker, &self.like_buttons));
+            self.wave_list.append(&track_row(
+                track,
+                &self.covers,
+                &self.worker,
+                &self.like_buttons,
+            ));
         }
     }
 
     /// Append a continuation batch to the My Wave list.
-    pub fn append_wave(&self, tracks: &[Track]) {        {
+    pub fn append_wave(&self, tracks: &[Track]) {
+        {
             let mut all = self.wave_tracks.borrow_mut();
             for track in tracks {
                 let id = track.id.as_ref().map(|id| id.0.clone()).unwrap_or_default();
-                if !all.iter().any(|t| t.id.as_ref().map(|x| x.0.clone()).unwrap_or_default() == id) {
+                if !all
+                    .iter()
+                    .any(|t| t.id.as_ref().map(|x| x.0.clone()).unwrap_or_default() == id)
+                {
                     all.push(track.clone());
                     self.wave_list.append(&track_row(
                         track,
@@ -575,21 +599,41 @@ impl MainView {
         self.search.artists_list.remove_all();
         self.search.playlists_list.remove_all();
 
-        set_section(&self.search.tracks_list, &self.search.tracks_header, tracks.len(), |list| {
-            for track in tracks {
-                list.append(&track_row(track, &self.covers, &self.worker, &self.like_buttons));
-            }
-        });
-        set_section(&self.search.albums_list, &self.search.albums_header, albums.len(), |list| {
-            for album in albums {
-                list.append(&album_row(album, &self.covers));
-            }
-        });
-        set_section(&self.search.artists_list, &self.search.artists_header, artists.len(), |list| {
-            for artist in artists {
-                list.append(&artist_row(artist, &self.covers));
-            }
-        });
+        set_section(
+            &self.search.tracks_list,
+            &self.search.tracks_header,
+            tracks.len(),
+            |list| {
+                for track in tracks {
+                    list.append(&track_row(
+                        track,
+                        &self.covers,
+                        &self.worker,
+                        &self.like_buttons,
+                    ));
+                }
+            },
+        );
+        set_section(
+            &self.search.albums_list,
+            &self.search.albums_header,
+            albums.len(),
+            |list| {
+                for album in albums {
+                    list.append(&album_row(album, &self.covers));
+                }
+            },
+        );
+        set_section(
+            &self.search.artists_list,
+            &self.search.artists_header,
+            artists.len(),
+            |list| {
+                for artist in artists {
+                    list.append(&artist_row(artist, &self.covers));
+                }
+            },
+        );
         set_section(
             &self.search.playlists_list,
             &self.search.playlists_header,
@@ -744,7 +788,10 @@ fn track_row(
             let state = liked.clone();
             like.connect_clicked(move |_| {
                 let target = !state.get();
-                worker.send(WorkerCommand::SetLike { id: id.clone(), liked: target });
+                worker.send(WorkerCommand::SetLike {
+                    id: id.clone(),
+                    liked: target,
+                });
             });
         }
         {
@@ -753,7 +800,10 @@ fn track_row(
             let state = disliked.clone();
             dislike.connect_clicked(move |_| {
                 let target = !state.get();
-                worker.send(WorkerCommand::SetDislike { id: id.clone(), disliked: target });
+                worker.send(WorkerCommand::SetDislike {
+                    id: id.clone(),
+                    disliked: target,
+                });
             });
         }
 
@@ -821,7 +871,13 @@ fn build_wave_page(
     worker: Worker,
     playback: Playback,
     wave_tracks: Rc<RefCell<Vec<Track>>>,
-) -> (GtkBox, Label, ListBox, Rc<RefCell<Vec<Track>>>, VibeSelector) {
+) -> (
+    GtkBox,
+    Label,
+    ListBox,
+    Rc<RefCell<Vec<Track>>>,
+    VibeSelector,
+) {
     let count_label = Label::new(Some("My Wave"));
     count_label.add_css_class("heading");
     let play = Button::with_label("Play");

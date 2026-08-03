@@ -5,6 +5,12 @@ edition = "2021"
 description = "Unofficial native GTK4 player for Yandex Music"
 license = "MIT"
 
+[package.metadata.deb]
+maintainer = "Aqendo"
+section = "sound"
+priority = "optional"
+depends = "libgtk-4-1, libadwaita-1-0, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libgstreamer-plugins-bad1.0-0, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, gstreamer1.0-libav, gstreamer1.0-pulseaudio"
+
 [lib]
 name = "ymapp"
 path = "src/lib.rs"

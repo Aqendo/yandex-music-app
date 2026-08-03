@@ -84,8 +84,8 @@ impl ApiClient {
                 .to_string();
             return Err(ApiError::Auth(message));
         }
-        let token: AuthTokens = serde_json::from_value(value)
-            .map_err(|e| ApiError::Auth(format!("token: {e}")))?;
+        let token: AuthTokens =
+            serde_json::from_value(value).map_err(|e| ApiError::Auth(format!("token: {e}")))?;
         Ok(PollOutcome::Token(token))
     }
 
@@ -96,7 +96,9 @@ impl ApiClient {
         F: FnOnce(&DeviceCode),
     {
         let device_id = crate::config::device_id();
-        let code = self.request_device_code(&device_id, "yandex-music-native").await?;
+        let code = self
+            .request_device_code(&device_id, "yandex-music-native")
+            .await?;
         on_code(&code);
 
         let interval = Duration::from_secs(code.interval.max(3) as u64);
@@ -135,7 +137,10 @@ impl ApiClient {
         if !status.is_success() {
             return Err(ApiError::Auth(format!(
                 "refresh failed: {}",
-                value.get("error_description").and_then(|v| v.as_str()).unwrap_or("unknown")
+                value
+                    .get("error_description")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
             )));
         }
         let token: AuthTokens =

@@ -49,7 +49,9 @@ impl Covers {
             image.set_paintable(Some(&texture));
             return;
         }
-        self.image_url.borrow_mut().insert(image.clone(), url.clone());
+        self.image_url
+            .borrow_mut()
+            .insert(image.clone(), url.clone());
         self.pending
             .borrow_mut()
             .entry(url)
@@ -72,8 +74,9 @@ impl Covers {
             return;
         }
         if self.requested.borrow_mut().insert(url.to_string()) {
-            self.worker
-                .send(WorkerCommand::FetchCover { url: url.to_string() });
+            self.worker.send(WorkerCommand::FetchCover {
+                url: url.to_string(),
+            });
         }
     }
 
@@ -96,7 +99,7 @@ impl Covers {
                 image_url.remove(&image);
             }
         }
-        
+
         let mut cache = self.cache.borrow_mut();
         let mut order = self.order.borrow_mut();
         if !cache.contains_key(url) {

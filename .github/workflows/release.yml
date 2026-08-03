@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x86_64-unknown-linux-gnu
+          - runner: ubuntu-24.04-arm
+            arch: aarch64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-4-dev \
+            libadwaita-1-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binaries
+        run: cargo build --release
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb --locked
+
+      - name: Build .deb package
+        run: cargo deb --output dist/
+
+      - name: Package tarball
+        run: |
+          mkdir -p dist/tarball
+          cp target/release/yandex-music target/release/ym-cli target/release/playtest dist/tarball/
+          tar -C dist/tarball -czf dist/yandex-music-app-${{ matrix.arch }}.tar.gz .
+          rm -rf dist/tarball
+
+      - name: List release assets
+        run: ls -lh dist/
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v5
+        with:
+          name: dist-${{ matrix.arch }}
+          path: dist/
+          retention-days: 7
+
+  release:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download all assets
+        uses: actions/download-artifact@v5
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List release assets
+        run: ls -lh dist/
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

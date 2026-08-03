@@ -4,11 +4,11 @@
 //! asynchronous signals (end-of-stream, errors, position/duration updates) are
 //! delivered to the `on_message` callback, which the caller wires to the main
 //! loop event channel so UI updates always happen on the main thread.
-use gtk4::glib;
 use gstreamer as gst;
 use gstreamer::prelude::*;
 use gstreamer::ClockTime;
 use gstreamer_play::{Play, PlayMessage, PlayState};
+use gtk4::glib;
 
 /// Events raised by the underlying `Play` pipeline.
 #[derive(Clone, Debug)]
@@ -138,9 +138,7 @@ impl Player {
         if std::env::var("YM_DEBUG").is_ok() {
             let uri = self.play.uri();
             let same = uri.as_deref() == Some(url);
-            eprintln!(
-                "[dbg] after set_uri: play.uri() same-as-requested={same}"
-            );
+            eprintln!("[dbg] after set_uri: play.uri() same-as-requested={same}");
         }
     }
 

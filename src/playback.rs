@@ -54,11 +54,9 @@ impl Playback {
             let message = match event {
                 PlayerEvent::EndOfStream => Some(AppEvent::PlaybackEnded),
                 PlayerEvent::Error(message) => Some(AppEvent::PlaybackError { message }),
-                PlayerEvent::StateChanged(state) => {
-                    Some(AppEvent::PlayStateChanged {
-                        playing: state == PlayState::Playing,
-                    })
-                }
+                PlayerEvent::StateChanged(state) => Some(AppEvent::PlayStateChanged {
+                    playing: state == PlayState::Playing,
+                }),
                 _ => None,
             };
             if let Some(message) = message {
@@ -209,7 +207,11 @@ impl Playback {
                 queue.push(track.clone());
             }
         }
-        dbg(format!("append_tracks: {} -> {} tracks", before, queue.len()));
+        dbg(format!(
+            "append_tracks: {} -> {} tracks",
+            before,
+            queue.len()
+        ));
     }
 
     /// Keep playing after a continuation batch: advance past the finished track
@@ -336,7 +338,9 @@ impl Playback {
     }
 
     fn announce(&self, track: &Track) {
-        let _ = self.ev.send(AppEvent::NowPlaying { track: track.clone() });
+        let _ = self.ev.send(AppEvent::NowPlaying {
+            track: track.clone(),
+        });
     }
 }
 
