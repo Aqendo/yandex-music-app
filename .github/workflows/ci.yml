@@ -118,7 +118,7 @@ jobs:
       - name: Package .dmg
         run: bash packaging/macos-dmg.sh
 
-      - name: Upload build artifacts
+      - name: Upload binaries
         uses: actions/upload-artifact@v5
         with:
           name: build-aarch64-apple-darwin
@@ -126,6 +126,13 @@ jobs:
             target/release/yandex-music
             target/release/ym-cli
             target/release/playtest
-            dist/*.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload .dmg
+        uses: actions/upload-artifact@v5
+        with:
+          name: build-aarch64-apple-darwin-dmg
+          path: dist/*.dmg
           if-no-files-found: error
           retention-days: 7
